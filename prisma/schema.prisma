@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StatusContrato {
+  EM_PROPOSTA
+  GANHOU
+  EM_EXECUCAO
+  ENCERRADO
+  RENOVACAO
+}
+
+enum StatusMarco {
+  NAO_INICIADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  ATRASADO
+}
+
+enum StatusEntrega {
+  PENDENTE
+  EM_ANDAMENTO
+  ENTREGUE
+  ATRASADA
+}
+
+enum Criticidade {
+  NORMAL
+  ATENCAO
+  CRITICO
+}
+
+model Contrato {
+  id        String          @id @default(cuid())
+  numero    String          @unique
+  cliente   String
+  orgao     String
+  objeto    String
+  processo  String?
+  valor     Decimal         @db.Decimal(14, 2)
+  inicio    DateTime
+  fim       DateTime
+  status    StatusContrato  @default(EM_PROPOSTA)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  marcos    Marco[]
+  entregas  Entrega[]
+  alertas   Alerta[]
+}
+
+model Marco {
+  id          String      @id @default(cuid())
+  contratoId  String
+  contrato    Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  nome        String
+  descricao   String?
+  responsavel String?
+  prazo       DateTime
+  realizado   DateTime?
+  status      StatusMarco @default(NAO_INICIADO)
+  createdAt   DateTime    @default(now())
+}
+
+model Entrega {
+  id             String        @id @default(cuid())
+  contratoId     String
+  contrato       Contrato      @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  ordemServico   String
+  descricao      String
+  pontosFuncao   Float?
+  horas          Float?
+  responsavel    String?
+  prazo          DateTime
+  status         StatusEntrega @default(PENDENTE)
+  createdAt      DateTime      @default(now())
+}
+
+model Alerta {
+  id          String      @id @default(cuid())
+  contratoId  String
+  contrato    Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  mensagem    String
+  criticidade Criticidade @default(NORMAL)
+  lido        Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+}
